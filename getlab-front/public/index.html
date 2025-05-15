@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GetLab - Reserva de Laboratórios</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            background-color: #fff;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+        }
+        .header {
+            background-color: #3b5998;
+            padding: 20px;
+        }
+        .container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .logo img {
+            height: 100px;
+        }
+        h1 {
+            color: #3b5998;
+            font-size: 6rem;
+            margin-bottom: -2.5rem;
+            margin-top: -1rem;
+        }
+        p {
+            color: #3b5998;
+            font-size: 1.6rem;
+        }
+        .button {
+            display: block;
+            width: 200px;
+            padding: 20px;
+            margin: 10px;
+            font-size: 1.5rem;
+            color: white;
+            background-color: #3b5998;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        .button:hover {
+            background-color: #3b5998;
+        }
+        .footer {
+            background-color: #3b5998;
+            padding: 26px;
+            text-align: center;
+            color: white;
+            margin-top: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <div class="logo">
+            <img src="logo.png" alt="FMP Logo">
+        </div>
+    </div>
+    <div class="container">
+        <h1>GetLab</h1>
+        <p>Reserva de laboratórios</p>
+        <a href="login.html" class="button">Entrar</a>
+        <a href="cadastro.html" class="button">Registrar</a>
+    </div>
+    <footer class="footer">
+        &copy; 2025  GetLab. Todos os direitos reservados
