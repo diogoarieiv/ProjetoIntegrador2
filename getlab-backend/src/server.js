@@ -2,6 +2,8 @@ const express = require('express');
 const cors = require('cors');
 const dotenv = require('dotenv');
 const { PrismaClient } = require('@prisma/client');
+const usuarioRoutes = require('./routes/usuarioRoutes');
+
 
 dotenv.config();
 const app = express();
@@ -13,6 +15,9 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.send('API do GetLab funcionando 🚀');
 });
+
+app.use('/api', usuarioRoutes); // agora /api/cadastro funciona
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

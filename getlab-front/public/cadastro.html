@@ -1,98 +1,22 @@
 <!DOCTYPE html>
 <html lang="pt-br">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link rel="stylesheet" href="cadastro.css">
     <title>GetLab - Cadastro</title>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            background-color: #ffffff;
-            margin: 0;
-            padding: 0;
-            display: flex;
-            flex-direction: column;
-            min-height: 100vh;
-        }
-        .header {
-            background-color: #3b5998;
-            padding: 20px;
-        }
-        .logo {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        .logo img {
-            height: 80px;
-        }
-        h1 {
-            color: #3b5998;
-            font-size: 2rem;
-            margin-top: 12rem;
-        }
-        form {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .form-group {
-            display: flex;
-            align-items: center;
-            width: 80%;
-            margin-bottom: 10px;
-            margin-left: 50px;
-        }
-        label {
-            font-size: 1.2rem;
-            color: #3b5998;
-            margin-right: 10px;
-            text-align: right;
-            width: 30%;
-        }
-        input {
-            width: 35%;
-            padding: 8px;
-            border: 2px solid #3b5998;
-            border-radius: 5px;
-            font-size: 1rem;
-        }
-        .button-container {
-            margin-top: 20px;
-        }
-        .button {
-            padding: 10px 20px;
-            font-size: 1rem;
-            color: white;
-            background-color: #3b5998;
-            border: none;
-            border-radius: 20px;
-            cursor: pointer;
-            text-decoration: none;
-            margin: 10px;
-        }
-        .button:hover {
-            background-color: #2d4373;
-        }
-        .footer {
-            background-color: #3b5998;
-            padding: 20px;
-            text-align: center;
-            color: white;
-            margin-top: auto;
-        }
-    </style>
 </head>
+
 <body>
     <div class="header">
         <div class="logo">
-            <img src="logo.png" alt="FMP Logo">
+            <img src="../assets/logo.png" alt="FMP Logo">
         </div>
     </div>
     <div class="container">
         <h1>Cadastro</h1>
-        <form>
+        <form id="cadastroForm">
             <div class="form-group">
                 <label for="nome">Nome:</label>
                 <input type="text" id="nome" name="nome" required>
@@ -118,5 +42,48 @@
     <footer class="footer">
         &copy; 2025 GetLab. Todos os direitos reservados.
     </footer>
+
+    <script>
+        document.getElementById('cadastroForm').addEventListener('submit', async function (e) {
+            e.preventDefault();
+
+            const nome = document.getElementById('nome').value.trim();
+            const email = document.getElementById('email').value.trim();
+            const telefone = document.getElementById('telefone').value.trim();
+            const senha = document.getElementById('senha').value.trim();
+
+            // Validação do email para aceitar somente os domínios permitidos
+            let tipo = null;
+            if (email.endsWith('@fmpsc.edu.br')) {
+                tipo = 'docente';
+            } else if (email.endsWith('@admin.com')) {
+                tipo = 'admin';
+            } else {
+                alert('Email inválido. Use @fmpsc.edu.br para docentes ou @admin.com para administradores.');
+                return; // para não enviar o formulário
+            }
+
+            try {
+                const response = await fetch('http://localhost:3000/api/cadastro', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ nome, email, telefone, senha, tipo })
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Erro ao cadastrar usuário');
+                }
+
+                alert('Usuário cadastrado com sucesso!');
+                this.reset();
+
+            } catch (err) {
+                alert('Falha no cadastro: ' + err.message);
+                console.error(err);
+            }
+        });
+    </script>
 </body>
+
 </html>
