@@ -1,19 +1,19 @@
 const dotenv = require("dotenv");
-dotenv.config(); // precisa estar ANTES do PrismaClient
+dotenv.config();
 
 const { PrismaClient } = require("@prisma/client");
 const prisma = new PrismaClient();
 
-//cadastro de usuario
+// Cadastrar usuário
 const cadastrarUsuario = async (req, res) => {
-  const { nome, email, telefone, senha, tipo } = req.body;
+  const { nome, email, telefone, senha } = req.body;
 
   // Validação de domínio e tipo
-  let tipoValidado;
+  let tipo;
   if (email.endsWith("@fmpsc.edu.br")) {
-    tipoValidado = "docente";
+    tipo = "docente";
   } else if (email.endsWith("@admin.com")) {
-    tipoValidado = "admin";
+    tipo = "admin";
   } else {
     return res.status(400).json({
       error:
@@ -22,58 +22,70 @@ const cadastrarUsuario = async (req, res) => {
   }
 
   try {
-    // Verifica se o e-mail já existe
-    const usuarioExistente = await prisma.Usuario.findUnique({
+    const usuarioExistente = await prisma.usuario.findUnique({
       where: { email },
     });
 
     if (usuarioExistente) {
-      return res.status(409).json({ error: "E-mail já cadastrado." }); // 409 = Conflict
+      return res.status(409).json({ error: "E-mail já cadastrado." });
     }
 
-    const novoUsuario = await prisma.Usuario.create({
-      data: { nome, email, telefone, senha, tipo: tipoValidado },
+    const novoUsuario = await prisma.usuario.create({
+      data: {
+        nome,
+        email,
+        telefone,
+        senha,
+        tipo,
+      },
     });
 
-    res.status(201).json(novoUsuario);
+    return res.status(201).json({
+      message: "Usuário cadastrado com sucesso!",
+      usuario: {
+        id: novoUsuario.id,
+        nome: novoUsuario.nome,
+        email: novoUsuario.email,
+        tipo: novoUsuario.tipo,
+      },
+    });
   } catch (error) {
-    res
-      .status(500)
-      .json({ error: "Erro ao cadastrar usuário: " + error.message });
+    return res.status(500).json({ error: "Erro ao cadastrar usuário: " + error.message });
   }
 };
 
-
-//login de usuario
-
+// Login de usuário
 const loginUsuario = async (req, res) => {
   const { email, senha } = req.body;
 
   try {
-    const usuario = await prisma.Usuario.findUnique({
+    const usuario = await prisma.usuario.findUnique({
       where: { email },
     });
 
     if (!usuario) {
-      return res.status(404).json({ error: 'Usuário não encontrado.' });
+      return res.status(404).json({ error: "Usuário não encontrado." });
     }
 
     if (usuario.senha !== senha) {
-      return res.status(401).json({ error: 'Senha incorreta.' });
+      return res.status(401).json({ error: "Senha incorreta." });
     }
 
-    // Se quiser retornar só dados públicos:
-    const { id, nome, tipo } = usuario;
-    res.status(200).json({ id, nome, email, tipo });
-
+    return res.status(200).json({
+      message: "Login realizado com sucesso!",
+      usuario: {
+        id: usuario.id,
+        nome: usuario.nome,
+        email: usuario.email,
+        tipo: usuario.tipo,
+      },
+    });
   } catch (error) {
-    res.status(500).json({ error: 'Erro ao realizar login: ' + error.message });
+    return res.status(500).json({ error: "Erro ao realizar login: " + error.message });
   }
 };
 
-
-
 module.exports = {
   cadastrarUsuario,
-  loginUsuario
+  loginUsuario,
 };

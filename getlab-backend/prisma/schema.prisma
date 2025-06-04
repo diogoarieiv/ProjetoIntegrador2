@@ -7,31 +7,47 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+enum StatusReserva {
+  pendente
+  aprovado
+  recusado
+}
+
 model Usuario {
-  id        Int      @id @default(autoincrement())
-  nome      String
-  email     String   @unique
-  telefone  String
-  senha     String
-  tipo      String   // "admin" ou "docente"
-  reservas  Reserva[]
+  id       Int     @id @default(autoincrement())
+  nome     String
+  email    String  @unique
+  telefone String  // 👈 ESTE AQUI
+  senha    String
+  tipo     String
+  status   String  @default("ativo")
+  reservas Reserva[]
 }
 
 model Laboratorio {
-  id        Int      @id @default(autoincrement())
-  nome      String
-  local     String
-  reservas  Reserva[]
+  id          Int       @id @default(autoincrement())
+  nome        String
+  capacidade  Int
+  recursos    String[]  // Lista de recursos, como projetor, computador, etc.
+  reservas    Reserva[]
 }
 
 model Reserva {
-  id             Int         @id @default(autoincrement())
-  laboratorioId  Int
-  usuarioId      Int
-  data           DateTime
-  horarioInicio  String
-  horarioFim     String
+  id             Int            @id @default(autoincrement())
+  dataHora       DateTime
+  status         StatusReserva
 
-  laboratorio    Laboratorio @relation(fields: [laboratorioId], references: [id])
-  usuario        Usuario     @relation(fields: [usuarioId], references: [id])
+  usuarioId      Int
+  laboratorioId  Int
+
+  usuario        Usuario        @relation(fields: [usuarioId], references: [id])
+  laboratorio    Laboratorio    @relation(fields: [laboratorioId], references: [id])
+}
+
+model Registro {
+  id        Int       @id @default(autoincrement())
+  docente   String
+  email     String
+  data      DateTime
+  status    String
 }
