@@ -1,0 +1,62 @@
+<!-- criarlaboratorio.html -->
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Criar Laboratório</title>
+    <link rel="stylesheet" href="criar.css">
+</head>
+
+<body>
+    <div class="header">
+        <div class="logo">
+            <img src="../assets/logo.png" alt="FMP Logo">
+        </div>
+    </div>
+    <div class="container">
+        <h1>Criar Novo Laboratório</h1>
+        <form id="form-lab">
+            <input type="text" id="nome" placeholder="Nome do laboratório" required>
+            <button type="submit">Criar</button>
+        </form>
+    </div>
+
+    <script>
+        const usuarioLogado = JSON.parse(localStorage.getItem('usuario'));
+
+        if (usuario.tipo !== 'admin') {
+            alert('Acesso negado. Apenas administradores podem criar laboratórios.');
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('form-lab').addEventListener('submit', async function (e) {
+            e.preventDefault();
+            const nome = document.getElementById('nome').value;
+
+            try {
+                const res = await fetch('http://localhost:3000/api/laboratorios', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'x-user-email': usuario.email 
+                    },
+                    body: JSON.stringify({ nome })
+                });
+
+                if (!res.ok) {
+                    const erro = await res.json();
+                    throw new Error(erro.error || 'Erro ao criar laboratório');
+                }
+
+                alert('Laboratório criado com sucesso!');
+                window.location.href = 'index.html';
+            } catch (err) {
+                alert('Erro: ' + err.message);
+            }
+        });
+
+    </script>
+</body>
+
+</html>

@@ -4,6 +4,7 @@ const dotenv = require('dotenv');
 dotenv.config();
 const { PrismaClient } = require('@prisma/client');
 const usuarioRoutes = require('./routes/usuarioRoutes');
+const laboratorioRoutes = require('./routes/laboratorioRoutes');
 
 
 const app = express();
@@ -17,7 +18,7 @@ app.get('/', (req, res) => {
 });
 
 app.use('/api', usuarioRoutes); // agora /api/cadastro funciona
-
+app.use('/api', laboratorioRoutes);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {

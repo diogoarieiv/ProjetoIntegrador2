@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GetLab Home</title>
+    <link rel="stylesheet" href="menu.css">
+</head>
+
+<body>
+    <div class="header">
+        <div class="logo">
+            <img src="../assets/logo.png" alt="FMP Logo">
+        </div>
+        <div class="nav">
+            <nav class="navbar">
+                <a href="">Perfil</a>
+                <a href="">Serviços</a>
+                <a href="criarLab.html">Criar Sala</a>
+                <a href="">Sair</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="container">
+        <h1>Laboratórios Disponíveis</h1>
+        <div id="cards-container" class="cards-container"></div>
+    </div>
+    <script>
+        async function carregarLaboratorios() {
+            const container = document.getElementById('cards-container');
+            const usuario = JSON.parse(localStorage.getItem('usuario'));
+
+            try {
+                const response = await fetch('http://localhost:3000/api/laboratorios');
+                const labs = await response.json();
+
+                labs.forEach(lab => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <img src="../assets/computador.png" alt="Computador">
+                        <h3>${lab.nome}</h3>
+                    `;
+                    container.appendChild(card);
+                });
+
+                // Botão de admin
+                if (usuario && usuario.tipo === 'admin') {
+                    const btn = document.createElement('a');
+                    btn.href = 'criarlaboratorio.html';
+                    btn.textContent = '+ Criar novo laboratório';
+                    btn.className = 'criar-btn';
+                    container.appendChild(btn);
+                }
+
+            } catch (err) {
+                console.error('Erro ao carregar laboratórios', err);
+            }
+        }
+
+        carregarLaboratorios();
+    </script>
+
+</body>
+</html>
