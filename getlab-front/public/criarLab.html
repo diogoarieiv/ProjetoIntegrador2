@@ -18,30 +18,38 @@
         <h1>Criar Novo Laboratório</h1>
         <form id="form-lab">
             <input type="text" id="nome" placeholder="Nome do laboratório" required>
+            <input type="number" id="capacidade" placeholder="Capacidade" required min="1">
+            <input type="text" id="recursos" placeholder="Recursos (separados por vírgula)" required>
             <button type="submit">Criar</button>
         </form>
+
     </div>
 
     <script>
-        const usuarioLogado = JSON.parse(localStorage.getItem('usuario'));
+        const dados = JSON.parse(localStorage.getItem('usuario'));
+        const usuarioLogado = dados.usuario;
 
-        if (usuario.tipo !== 'admin') {
+        if (!usuarioLogado || usuarioLogado.tipo !== 'admin') {
             alert('Acesso negado. Apenas administradores podem criar laboratórios.');
             window.location.href = 'index.html';
         }
 
         document.getElementById('form-lab').addEventListener('submit', async function (e) {
             e.preventDefault();
+
             const nome = document.getElementById('nome').value;
+            const capacidade = parseInt(document.getElementById('capacidade').value);
+            const recursosInput = document.getElementById('recursos').value;
+            const recursos = recursosInput.split(',').map(r => r.trim()).filter(r => r);
 
             try {
                 const res = await fetch('http://localhost:3000/api/laboratorios', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
-                        'x-user-email': usuario.email 
+                        'x-user-email': usuarioLogado.email
                     },
-                    body: JSON.stringify({ nome })
+                    body: JSON.stringify({ nome, capacidade, recursos })
                 });
 
                 if (!res.ok) {
@@ -55,6 +63,8 @@
                 alert('Erro: ' + err.message);
             }
         });
+
+
 
     </script>
 </body>
