@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GetLab - Registro de Atividades</title>
+    <link rel="stylesheet" href="registro.css">
+</head>
+
+<body>
+    <div class="header">
+        <div class="logo">
+            <img src="../assets/logo.png" alt="FMP Logo">
+        </div>
+        <div class="nav">
+            <nav class="navbar">
+                <a href="menu.html">Home</a>
+                <a href="laboratorios.html">Laboratórios</a>
+                <a href="verReserva.html">Ver Reservas</a>
+                <a href="registro.html" class="active">Registro</a>
+                <a href="#" id="btnSair">Sair</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Registro de Atividades</h1>
+            <p>Histórico completo de todas as ações realizadas no sistema</p>
+        </div>
+
+        <div class="filters-section">
+            <div class="filter-group">
+                <label for="filtroData">Filtrar por Data:</label>
+                <input type="date" id="filtroData">
+            </div>
+            <div class="filter-group">
+                <label for="filtroStatus">Filtrar por Status:</label>
+                <select id="filtroStatus">
+                    <option value="">Todos</option>
+                    <option value="Solicitação de reserva enviada">Solicitação Enviada</option>
+                    <option value="Reserva aprovada">Reserva Aprovada</option>
+                    <option value="Reserva recusada">Reserva Recusada</option>
+                    <option value="Login realizado">Login</option>
+                    <option value="Logout realizado">Logout</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="filtroDocente">Filtrar por Docente:</label>
+                <input type="text" id="filtroDocente" placeholder="Nome do docente...">
+            </div>
+            <button id="btnLimparFiltros" class="btn-secondary">Limpar Filtros</button>
+        </div>
+
+        <div class="stats-section">
+            <div class="stat-card">
+                <div class="stat-icon">📊</div>
+                <div class="stat-info">
+                    <h3 id="totalRegistros">0</h3>
+                    <p>Total de Registros</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">✅</div>
+                <div class="stat-info">
+                    <h3 id="reservasAprovadas">0</h3>
+                    <p>Reservas Aprovadas</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">⏳</div>
+                <div class="stat-info">
+                    <h3 id="reservasPendentes">0</h3>
+                    <p>Reservas Pendentes</p>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon">❌</div>
+                <div class="stat-info">
+                    <h3 id="reservasRecusadas">0</h3>
+                    <p>Reservas Recusadas</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="registros-section">
+            <div class="section-header">
+                <h2>Histórico de Registros</h2>
+                <div class="export-buttons">
+                    <button id="btnExportarCSV" class="btn-export">📄 Exportar CSV</button>
+                    <button id="btnExportarPDF" class="btn-export">📋 Exportar PDF</button>
+                </div>
+            </div>
+
+            <div class="registros-container">
+                <div id="loadingRegistros" class="loading">
+                    <div class="spinner"></div>
+                    <p>Carregando registros...</p>
+                </div>
+                <div id="registrosLista" class="registros-lista" style="display: none;">
+                    <!-- Registros serão carregados dinamicamente -->
+                </div>
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <div class="empty-icon">📝</div>
+                    <h3>Nenhum registro encontrado</h3>
+                    <p>Não há registros para exibir com os filtros aplicados.</p>
+                </div>
+            </div>
+
+            <div class="pagination">
+                <button id="btnAnterior" class="btn-pagination" disabled>← Anterior</button>
+                <span id="paginaInfo">Página 1 de 1</span>
+                <button id="btnProximo" class="btn-pagination" disabled>Próximo →</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        &copy; 2025 GetLab. Todos os direitos reservados
+    </footer>
+
+    <script>
+        // Verificar se usuário está logado
+        const usuarioLogado = JSON.parse(localStorage.getItem('usuario'));
+        if (!usuarioLogado) {
+            window.location.href = 'login.html';
+        }
+
+        // Variáveis globais
+        let registros = [];
+        let registrosFiltrados = [];
+        let paginaAtual = 1;
+        const registrosPorPagina = 10;
+
+        // Carregar registros ao inicializar
+        document.addEventListener('DOMContentLoaded', function() {
+            carregarRegistros();
+            configurarEventListeners();
+        });
+
+        // Função para carregar registros
+        async function carregarRegistros() {
+            try {
+                const response = await fetch('http://localhost:3000/api/registros');
+                if (response.ok) {
+                    registros = await response.json();
+                    registrosFiltrados = [...registros];
+                    atualizarEstatisticas();
+                    renderizarRegistros();
+                } else {
+                    throw new Error('Erro ao carregar registros');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                mostrarErro('Erro ao carregar registros. Tente novamente.');
+            } finally {
+                document.getElementById('loadingRegistros').style.display = 'none';
+            }
+        }
+
+        // Função para atualizar estatísticas
+        function atualizarEstatisticas() {
+            const total = registros.length;
+            const aprovadas = registros.filter(r => r.status.includes('aprovada')).length;
+            const pendentes = registros.filter(r => r.status.includes('enviada')).length;
+            const recusadas = registros.filter(r => r.status.includes('recusada')).length;
+
+            document.getElementById('totalRegistros').textContent = total;
+            document.getElementById('reservasAprovadas').textContent = aprovadas;
+            document.getElementById('reservasPendentes').textContent = pendentes;
+            document.getElementById('reservasRecusadas').textContent = recusadas;
+        }
+
+        // Função para renderizar registros
+        function renderizarRegistros() {
+            const container = document.getElementById('registrosLista');
+            const emptyState = document.getElementById('emptyState');
+            
+            if (registrosFiltrados.length === 0) {
+                container.style.display = 'none';
+                emptyState.style.display = 'block';
+                return;
+            }
+
+            container.style.display = 'block';
+            emptyState.style.display = 'none';
+
+            // Calcular registros da página atual
+            const inicio = (paginaAtual - 1) * registrosPorPagina;
+            const fim = inicio + registrosPorPagina;
+            const registrosPagina = registrosFiltrados.slice(inicio, fim);
+
+            container.innerHTML = '';
+
+            registrosPagina.forEach(registro => {
+                const registroElement = document.createElement('div');
+                registroElement.className = 'registro-item';
+                
+                const statusClass = getStatusClass(registro.status);
+                const dataFormatada = new Date(registro.data).toLocaleString('pt-BR');
+                
+                registroElement.innerHTML = `
+                    <div class="registro-header">
+                        <div class="registro-info">
+                            <h4>${registro.docente}</h4>
+                            <p class="email">${registro.email}</p>
+                        </div>
+                        <div class="registro-status">
+                            <span class="status-badge ${statusClass}">${registro.status}</span>
+                            <span class="data">${dataFormatada}</span>
+                        </div>
+                    </div>
+                    ${registro.detalhes ? `<div class="registro-detalhes">${registro.detalhes}</div>` : ''}
+                `;
+                
+                container.appendChild(registroElement);
+            });
+
+            atualizarPaginacao();
+        }
+
+        // Função para obter classe CSS do status
+        function getStatusClass(status) {
+            if (status.includes('aprovada')) return 'aprovado';
+            if (status.includes('recusada')) return 'recusado';
+            if (status.includes('enviada')) return 'pendente';
+            return 'info';
+        }
+
+        // Função para atualizar paginação
+        function atualizarPaginacao() {
+            const totalPaginas = Math.ceil(registrosFiltrados.length / registrosPorPagina);
+            
+            document.getElementById('btnAnterior').disabled = paginaAtual === 1;
+            document.getElementById('btnProximo').disabled = paginaAtual === totalPaginas || totalPaginas === 0;
+            document.getElementById('paginaInfo').textContent = `Página ${paginaAtual} de ${totalPaginas}`;
+        }
+
+        // Função para aplicar filtros
+        function aplicarFiltros() {
+            const filtroData = document.getElementById('filtroData').value;
+            const filtroStatus = document.getElementById('filtroStatus').value;
+            const filtroDocente = document.getElementById('filtroDocente').value.toLowerCase();
+
+            registrosFiltrados = registros.filter(registro => {
+                const dataRegistro = new Date(registro.data).toISOString().split('T')[0];
+                
+                const matchData = !filtroData || dataRegistro === filtroData;
+                const matchStatus = !filtroStatus || registro.status.includes(filtroStatus);
+                const matchDocente = !filtroDocente || registro.docente.toLowerCase().includes(filtroDocente);
+                
+                return matchData && matchStatus && matchDocente;
+            });
+
+            paginaAtual = 1;
+            renderizarRegistros();
+        }
+
+        // Função para limpar filtros
+        function limparFiltros() {
+            document.getElementById('filtroData').value = '';
+            document.getElementById('filtroStatus').value = '';
+            document.getElementById('filtroDocente').value = '';
+            registrosFiltrados = [...registros];
+            paginaAtual = 1;
+            renderizarRegistros();
+        }
+
+        // Função para exportar CSV
+        function exportarCSV() {
+            const headers = ['Docente', 'Email', 'Data', 'Status', 'Detalhes'];
+            const csvContent = [
+                headers.join(','),
+                ...registrosFiltrados.map(registro => [
+                    `"${registro.docente}"`,
+                    `"${registro.email}"`,
+                    `"${new Date(registro.data).toLocaleString('pt-BR')}"`,
+                    `"${registro.status}"`,
+                    `"${registro.detalhes || ''}"`
+                ].join(','))
+            ].join('\n');
+
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `registros_getlab_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+        }
+
+        // Função para exportar PDF (simulado)
+        function exportarPDF() {
+            alert('Funcionalidade de exportação PDF será implementada em breve!');
+        }
+
+        // Função para mostrar erro
+        function mostrarErro(mensagem) {
+            const container = document.getElementById('registrosLista');
+            container.innerHTML = `<div class="error-message">${mensagem}</div>`;
+            container.style.display = 'block';
+        }
+
+        // Configurar event listeners
+        function configurarEventListeners() {
+            // Filtros
+            document.getElementById('filtroData').addEventListener('change', aplicarFiltros);
+            document.getElementById('filtroStatus').addEventListener('change', aplicarFiltros);
+            document.getElementById('filtroDocente').addEventListener('input', aplicarFiltros);
+            document.getElementById('btnLimparFiltros').addEventListener('click', limparFiltros);
+
+            // Paginação
+            document.getElementById('btnAnterior').addEventListener('click', function() {
+                if (paginaAtual > 1) {
+                    paginaAtual--;
+                    renderizarRegistros();
+                }
+            });
+
+            document.getElementById('btnProximo').addEventListener('click', function() {
+                const totalPaginas = Math.ceil(registrosFiltrados.length / registrosPorPagina);
+                if (paginaAtual < totalPaginas) {
+                    paginaAtual++;
+                    renderizarRegistros();
+                }
+            });
+
+            // Exportação
+            document.getElementById('btnExportarCSV').addEventListener('click', exportarCSV);
+            document.getElementById('btnExportarPDF').addEventListener('click', exportarPDF);
+
+            // Logout
+            document.getElementById('btnSair').addEventListener('click', function(e) {
+                e.preventDefault();
+                localStorage.removeItem('usuario');
+                localStorage.removeItem('laboratorioSelecionado');
+                window.location.href = 'index.html';
+            });
+        }
+
+        // Adicionar registro de login ao carregar a página
+        async function adicionarRegistroLogin() {
+            const registro = {
+                docente: usuarioLogado.nome,
+                email: usuarioLogado.email,
+                data: new Date().toISOString(),
+                status: 'Login realizado',
+                detalhes: `Usuário acessou a página de registro em ${new Date().toLocaleString('pt-BR')}`
+            };
+            
+            try {
+                await fetch('http://localhost:3000/api/registros', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(registro)
+                });
+            } catch (error) {
+                console.error('Erro ao salvar registro de login:', error);
+            }
+        }
+
+        // Adicionar registro de login
+        adicionarRegistroLogin();
+    </script>
+</body>
+</html>
+

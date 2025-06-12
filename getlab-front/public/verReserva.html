@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GetLab - Ver Reservas</title>
+    <link rel="stylesheet" href="verReserva.css">
+</head>
+
+<body>
+    <div class="header">
+        <div class="logo">
+            <img src="../assets/logo.png" alt="FMP Logo">
+        </div>
+        <div class="nav">
+            <nav class="navbar">
+                <a href="menu.html">Home</a>
+                <a href="laboratorios.html">Laboratórios</a>
+                <a href="verReserva.html" class="active">Ver Reservas</a>
+                <a href="registro.html">Registro</a>
+                <a href="#" id="btnSair">Sair</a>
+            </nav>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="lab-info">
+            <h1 id="labNome">Laboratório</h1>
+            <p id="labDetalhes">Carregando informações...</p>
+        </div>
+
+        <div class="calendar-section">
+            <div class="calendar-header">
+                <h2>Calendário de Reservas</h2>
+                <div class="legend">
+                    <div class="legend-item">
+                        <span class="color-box disponivel"></span>
+                        <span>Disponível</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="color-box ocupado"></span>
+                        <span>Ocupado</span>
+                    </div>
+                    <div class="legend-item">
+                        <span class="color-box pendente"></span>
+                        <span>Pendente</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Botões de autenticação do Google Calendar -->
+            <div class="auth-section">
+                <button id="authorize_button" onclick="handleAuthClick()">Conectar ao Google Calendar</button>
+                <button id="signout_button" onclick="handleSignoutClick()" style="display: none;">Desconectar</button>
+            </div>
+
+            <!-- Calendário personalizado -->
+            <div class="calendar-container">
+                <div class="calendar-nav">
+                    <button id="prevMonth">&lt;</button>
+                    <h3 id="currentMonth"></h3>
+                    <button id="nextMonth">&gt;</button>
+                </div>
+                <div class="calendar-grid" id="calendarGrid">
+                    <!-- Dias da semana -->
+                    <div class="day-header">Dom</div>
+                    <div class="day-header">Seg</div>
+                    <div class="day-header">Ter</div>
+                    <div class="day-header">Qua</div>
+                    <div class="day-header">Qui</div>
+                    <div class="day-header">Sex</div>
+                    <div class="day-header">Sáb</div>
+                    <!-- Dias serão inseridos dinamicamente -->
+                </div>
+            </div>
+
+            <!-- Seção de reserva para docentes -->
+            <div class="reserva-section" id="reservaSection" style="display: none;">
+                <h3>Solicitar Reserva</h3>
+                <form id="reservaForm">
+                    <div class="form-group">
+                        <label for="dataReserva">Data:</label>
+                        <input type="date" id="dataReserva" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="horaInicio">Hora de Início:</label>
+                        <input type="time" id="horaInicio" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="horaFim">Hora de Fim:</label>
+                        <input type="time" id="horaFim" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="descricao">Descrição da Atividade:</label>
+                        <textarea id="descricao" rows="3" placeholder="Descreva a atividade que será realizada..." required></textarea>
+                    </div>
+                    <button type="submit" class="btn-solicitar">Solicitar Reserva</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Lista de eventos do Google Calendar -->
+        <div class="events-section">
+            <h3>Eventos do Google Calendar</h3>
+            <div id="content" class="events-list">
+                <p>Conecte-se ao Google Calendar para ver os eventos.</p>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer">
+        &copy; 2025 GetLab. Todos os direitos reservados
+    </footer>
+
+    <!-- Google APIs -->
+    <script type="text/javascript">
+        /* exported gapiLoaded */
+        /* exported gisLoaded */
+        /* exported handleAuthClick */
+        /* exported handleSignoutClick */
+
+        // TODO(developer): Set to client ID and API key from the Developer Console
+        const CLIENT_ID = 'YOUR_CLIENT_ID';
+        const API_KEY = 'YOUR_API_KEY';
+
+        // Discovery doc URL for APIs used by the quickstart
+        const DISCOVERY_DOC = 'https://www.googleapis.com/discovery/v1/apis/calendar/v3/rest';
+
+        // Authorization scopes required by the API; multiple scopes can be
+        // included, separated by spaces.
+        const SCOPES = 'https://www.googleapis.com/auth/calendar.readonly';
+
+        let tokenClient;
+        let gapi;
+        let gapiInited = false;
+        let gisInited = false;
+
+        document.getElementById('authorize_button').style.visibility = 'hidden';
+        document.getElementById('signout_button').style.visibility = 'hidden';
+
+        /**
+         * Callback after api.js is loaded.
+         */
+        function gapiLoaded() {
+            gapi.load('client', initializeGapiClient);
+        }
+
+        /**
+         * Callback after the API client is loaded. Loads the
+         * discovery doc to initialize the API.
+         */
+        async function initializeGapiClient() {
+            await gapi.client.init({
+                apiKey: API_KEY,
+                discoveryDocs: [DISCOVERY_DOC],
+            });
+            gapiInited = true;
+            maybeEnableButtons();
+        }
+
+        /**
+         * Callback after Google Identity Services are loaded.
+         */
+        function gisLoaded() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: '', // defined later
+            });
+            gisInited = true;
+            maybeEnableButtons();
+        }
+
+        /**
+         * Enables user interaction after all libraries are loaded.
+         */
+        function maybeEnableButtons() {
+            if (gapiInited && gisInited) {
+                document.getElementById('authorize_button').style.visibility = 'visible';
+            }
+        }
+
+        /**
+         *  Sign in the user upon button click.
+         */
+        function handleAuthClick() {
+            tokenClient.callback = async (resp) => {
+                if (resp.error !== undefined) {
+                    throw (resp);
+                }
+                document.getElementById('signout_button').style.visibility = 'visible';
+                document.getElementById('authorize_button').innerText = 'Atualizar';
+                await listUpcomingEvents();
+            };
+
+            if (gapi.client.getToken() === null) {
+                // Prompt the user to select a Google Account and ask for consent to share their data
+                // when establishing a new session.
+                tokenClient.requestAccessToken({prompt: 'consent'});
+            } else {
+                // Skip display of account chooser and consent dialog for an existing session.
+                tokenClient.requestAccessToken({prompt: ''});
+            }
+        }
+
+        /**
+         *  Sign out the user upon button click.
+         */
+        function handleSignoutClick() {
+            const token = gapi.client.getToken();
+            if (token !== null) {
+                google.accounts.oauth2.revoke(token.access_token);
+                gapi.client.setToken('');
+                document.getElementById('content').innerText = '';
+                document.getElementById('authorize_button').innerText = 'Conectar ao Google Calendar';
+                document.getElementById('signout_button').style.visibility = 'hidden';
+            }
+        }
+
+        /**
+         * Print the summary and start datetime/date of the next 10 events in
+         * the authorized user's calendar. If no events are found an
+         * appropriate message is printed.
+         */
+        async function listUpcomingEvents() {
+            let response;
+            try {
+                const request = {
+                    'calendarId': 'primary',
+                    'timeMin': (new Date()).toISOString(),
+                    'showDeleted': false,
+                    'singleEvents': true,
+                    'maxResults': 10,
+                    'orderBy': 'startTime',
+                };
+                response = await gapi.client.calendar.events.list(request);
+            } catch (err) {
+                document.getElementById('content').innerText = err.message;
+                return;
+            }
+
+            const events = response.result.items;
+            if (!events || events.length == 0) {
+                document.getElementById('content').innerText = 'Nenhum evento encontrado.';
+                return;
+            }
+            // Flatten to string to display
+            const output = events.reduce(
+                (str, event) => `${str}${event.summary} (${event.start.dateTime || event.start.date})\n`,
+                'Próximos eventos:\n');
+            document.getElementById('content').innerText = output;
+        }
+    </script>
+    <script async defer src="https://apis.google.com/js/api.js" onload="gapiLoaded()"></script>
+    <script async defer src="https://accounts.google.com/gsi/client" onload="gisLoaded()"></script>
+
+    <script>
+        // Verificar se usuário está logado
+        const usuarioLogado = JSON.parse(localStorage.getItem('usuario'));
+        if (!usuarioLogado) {
+            window.location.href = 'login.html';
+        }
+
+        // Verificar se é docente para mostrar seção de reserva
+        if (usuarioLogado && usuarioLogado.email && usuarioLogado.email.includes('@fmpsc.edu.br')) {
+            document.getElementById('reservaSection').style.display = 'block';
+        }
+
+        // Carregar informações do laboratório selecionado
+        const laboratorioSelecionado = JSON.parse(localStorage.getItem('laboratorioSelecionado'));
+        if (laboratorioSelecionado) {
+            document.getElementById('labNome').textContent = laboratorioSelecionado.nome;
+            document.getElementById('labDetalhes').textContent = `Laboratório selecionado: ${laboratorioSelecionado.nome}`;
+        } else {
+            document.getElementById('labNome').textContent = 'Nenhum laboratório selecionado';
+            document.getElementById('labDetalhes').textContent = 'Volte para a página de laboratórios e selecione um laboratório.';
+        }
+
+        // Calendário personalizado
+        let currentDate = new Date();
+        let currentMonth = currentDate.getMonth();
+        let currentYear = currentDate.getFullYear();
+
+        const months = [
+            'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+            'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+        ];
+
+        function generateCalendar(month, year) {
+            const firstDay = new Date(year, month, 1).getDay();
+            const daysInMonth = new Date(year, month + 1, 0).getDate();
+            
+            document.getElementById('currentMonth').textContent = `${months[month]} ${year}`;
+            
+            const calendarGrid = document.getElementById('calendarGrid');
+            // Limpar dias anteriores (manter cabeçalhos)
+            const dayHeaders = calendarGrid.querySelectorAll('.day-header');
+            calendarGrid.innerHTML = '';
+            dayHeaders.forEach(header => calendarGrid.appendChild(header));
+            
+            // Adicionar dias vazios do início
+            for (let i = 0; i < firstDay; i++) {
+                const emptyDay = document.createElement('div');
+                emptyDay.className = 'calendar-day empty';
+                calendarGrid.appendChild(emptyDay);
+            }
+            
+            // Adicionar dias do mês
+            for (let day = 1; day <= daysInMonth; day++) {
+                const dayElement = document.createElement('div');
+                dayElement.className = 'calendar-day';
+                dayElement.textContent = day;
+                
+                // Simular status de reserva (substituir por dados reais)
+                const randomStatus = Math.random();
+                if (randomStatus < 0.3) {
+                    dayElement.classList.add('ocupado');
+                } else if (randomStatus < 0.5) {
+                    dayElement.classList.add('pendente');
+                } else {
+                    dayElement.classList.add('disponivel');
+                }
+                
+                // Adicionar evento de clique
+                dayElement.addEventListener('click', function() {
+                    const selectedDate = new Date(year, month, day);
+                    document.getElementById('dataReserva').value = selectedDate.toISOString().split('T')[0];
+                });
+                
+                calendarGrid.appendChild(dayElement);
+            }
+        }
+
+        // Event listeners para navegação do calendário
+        document.getElementById('prevMonth').addEventListener('click', function() {
+            currentMonth--;
+            if (currentMonth < 0) {
+                currentMonth = 11;
+                currentYear--;
+            }
+            generateCalendar(currentMonth, currentYear);
+        });
+
+        document.getElementById('nextMonth').addEventListener('click', function() {
+            currentMonth++;
+            if (currentMonth > 11) {
+                currentMonth = 0;
+                currentYear++;
+            }
+            generateCalendar(currentMonth, currentYear);
+        });
+
+        // Formulário de reserva
+        document.getElementById('reservaForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const formData = {
+                laboratorioId: laboratorioSelecionado.id,
+                usuarioId: usuarioLogado.id,
+                dataReserva: document.getElementById('dataReserva').value,
+                horaInicio: document.getElementById('horaInicio').value,
+                horaFim: document.getElementById('horaFim').value,
+                descricao: document.getElementById('descricao').value,
+                status: 'pendente'
+            };
+            
+            try {
+                const response = await fetch('http://localhost:3000/api/reservas', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(formData)
+                });
+                
+                if (response.ok) {
+                    alert('Solicitação de reserva enviada com sucesso!');
+                    document.getElementById('reservaForm').reset();
+                    
+                    // Salvar no registro
+                    await salvarRegistro(formData);
+                } else {
+                    alert('Erro ao enviar solicitação. Tente novamente.');
+                }
+            } catch (error) {
+                console.error('Erro:', error);
+                alert('Erro ao conectar com o servidor.');
+            }
+        });
+
+        // Função para salvar no registro
+        async function salvarRegistro(dadosReserva) {
+            const registro = {
+                docente: usuarioLogado.nome,
+                email: usuarioLogado.email,
+                data: new Date().toISOString(),
+                status: 'Solicitação de reserva enviada',
+                detalhes: `Laboratório: ${laboratorioSelecionado.nome}, Data: ${dadosReserva.dataReserva}, Horário: ${dadosReserva.horaInicio} - ${dadosReserva.horaFim}`
+            };
+            
+            try {
+                await fetch('http://localhost:3000/api/registros', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(registro)
+                });
+            } catch (error) {
+                console.error('Erro ao salvar registro:', error);
+            }
+        }
+
+        // Logout
+        document.getElementById('btnSair').addEventListener('click', function(e) {
+            e.preventDefault();
+            localStorage.removeItem('usuario');
+            localStorage.removeItem('laboratorioSelecionado');
+            window.location.href = 'index.html';
+        });
+
+        // Inicializar calendário
+        generateCalendar(currentMonth, currentYear);
+    </script>
+</body>
+</html>
+

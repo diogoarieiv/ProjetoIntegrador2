@@ -1,3 +1,4 @@
+/* Estilo moderno para a página de criar laboratório */
 * {
     margin: 0;
     padding: 0;
@@ -9,18 +10,18 @@
 }
 
 body {
-    font-family: Arial, sans-serif;
-    text-align: center;
-    background-color: #ffffff;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-    padding-top: 100px; 
+    padding-top: 100px;
+    color: #333;
 }
 
 .header {
-    background-color: #3b5998;
-    padding: 20px 40px;
+    background: linear-gradient(135deg, #4a6cf7 0%, #667eea 100%);
+    padding: 15px 40px;
     display: flex;
     justify-content: space-between;
     align-items: center;
@@ -28,58 +29,171 @@ body {
     top: 0;
     width: 100%;
     z-index: 1000;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+    backdrop-filter: blur(10px);
 }
 
 .logo img {
-    height: 60px;
+    height: 50px;
+    filter: brightness(0) invert(1);
+    transition: all 0.3s ease;
+}
+
+.logo img:hover {
+    transform: scale(1.05);
 }
 
 .container {
-    max-width: 500px;
-    margin: auto;
-    padding: 30px;
-    background-color: #f9f9f9;
-    box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
-    border-radius: 12px;
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 40px;
+    background: rgba(255, 255, 255, 0.95);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.2);
+    border-radius: 20px;
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    animation: fadeInUp 0.8s ease;
 }
 
 h1 {
-    color: #3b5998;
-    margin-bottom: 20px;
+    color: #4a6cf7;
+    margin-bottom: 30px;
+    font-size: 2.2rem;
+    font-weight: 700;
+    text-align: center;
 }
 
 form {
     display: flex;
     flex-direction: column;
-    gap: 15px;
+    gap: 25px;
 }
 
-input[type="text"] {
-    padding: 12px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 16px;
+input[type="text"], input[type="number"] {
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px solid #e1e8ff;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+input[type="text"]:focus, input[type="number"]:focus {
+    border-color: #4a6cf7;
+    box-shadow: 0 0 0 3px rgba(74, 108, 247, 0.1);
+    background: white;
+    transform: translateY(-2px);
+}
+
+input[type="text"]:hover, input[type="number"]:hover {
+    border-color: #667eea;
+}
+
+input::placeholder {
+    color: #999;
+    font-weight: 400;
 }
 
 button {
-    background-color: #3b5998;
+    background: linear-gradient(135deg, #4a6cf7 0%, #667eea 100%);
     color: white;
-    padding: 12px;
-    font-size: 16px;
-    border-radius: 8px;
+    padding: 18px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    border-radius: 25px;
     cursor: pointer;
-    transition: background-color 0.3s;
+    transition: all 0.3s ease;
+    box-shadow: 0 8px 25px rgba(74, 108, 247, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+button::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+    transition: left 0.5s;
+}
+
+button:hover::before {
+    left: 100%;
 }
 
 button:hover {
-    background-color: #2e4a86;
+    transform: translateY(-3px);
+    box-shadow: 0 15px 35px rgba(74, 108, 247, 0.6);
+    background: linear-gradient(135deg, #667eea 0%, #4a6cf7 100%);
+}
+
+button:active {
+    transform: translateY(-1px);
+    box-shadow: 0 8px 20px rgba(74, 108, 247, 0.5);
 }
 
 footer {
     margin-top: auto;
-    padding: 20px;
-    background-color: #f2f2f2;
-    color: #555;
+    padding: 25px;
+    background: linear-gradient(135deg, #4a6cf7 0%, #667eea 100%);
+    color: white;
     text-align: center;
-    font-size: 14px;
+    font-weight: 500;
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.1);
 }
+
+/* Animações */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Responsividade */
+@media (max-width: 768px) {
+    .header {
+        padding: 10px 20px;
+    }
+    
+    .container {
+        margin: 20px;
+        padding: 30px 25px;
+    }
+    
+    h1 {
+        font-size: 1.8rem;
+        margin-bottom: 25px;
+    }
+    
+    input[type="text"], input[type="number"] {
+        padding: 12px;
+    }
+    
+    button {
+        padding: 15px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 480px) {
+    body {
+        padding-top: 80px;
+    }
+    
+    .container {
+        margin: 15px;
+        padding: 25px 20px;
+    }
+    
+    h1 {
+        font-size: 1.6rem;
+    }
+}
+

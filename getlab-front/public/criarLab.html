@@ -43,7 +43,7 @@
             const recursos = recursosInput.split(',').map(r => r.trim()).filter(r => r);
 
             try {
-                const res = await fetch('http://localhost:3000/api/laboratorios', {
+                const res = await fetch("https://3000-ia3x6g61do0vm9a3z4wa8-4bea3717.manusvm.computer/api/laboratorios", {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

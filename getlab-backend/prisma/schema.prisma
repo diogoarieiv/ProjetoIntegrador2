@@ -50,4 +50,6 @@ model Registro {
   email     String
   data      DateTime
   status    String
+  detalhes  String? // Adicionado o campo detalhes
 }
+
