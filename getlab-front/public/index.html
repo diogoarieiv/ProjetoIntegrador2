@@ -20,7 +20,6 @@
         <p>Reserva de laboratórios</p>
         <a href="login.html" class="button" id="btnEntrar">Entrar</a>
         <a href="cadastro.html" class="button" id="btnRegistrar">Registrar</a>
-        <a href="menu.html" class="button" id="btnMenu" style="display: none;">Menu</a>
         <a href="#" class="button" id="btnSair" style="display: none;">Sair</a>
     </div>
 
@@ -31,14 +30,14 @@
     <script>
         const usuarioLogado = JSON.parse(localStorage.getItem('usuario'));
 
-        if (usuarioLogado) {
+        if (usuarioLogado && usuarioLogado.usuario) {
             document.getElementById('btnEntrar').style.display = 'none';
             document.getElementById('btnRegistrar').style.display = 'none';
             document.getElementById('btnSair').style.display = 'block';
             document.getElementById('btnMenu').style.display = 'block';
 
             const saudacao = document.createElement('p');
-            saudacao.textContent = `Bem-vindo, ${usuarioLogado.nome}!`;
+            saudacao.textContent = `Bem-vindo, ${usuarioLogado.usuario.nome}!`;
             document.querySelector('.container').appendChild(saudacao);
         }
 

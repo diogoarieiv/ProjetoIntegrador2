@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GetLab - Laboratórios</title>
     <link rel="stylesheet" href="laboratorios.css">
+
 </head>
 
 <body>
@@ -14,9 +15,11 @@
         </div>
         <div class="nav">
             <nav class="navbar">
-                <a href="menu.html">Home</a>
                 <a href="laboratorios.html" class="active">Laboratórios</a>
                 <a href="registro.html">Registro</a>
+                <a href="verReserva.html">Ver Reservas</a>
+                <a href="admin.html" id="adminLink" style="display: none;">Painel Admin</a>
+                <a href="criarLab.html" id="criarLab" style="display: none;">Criar Laboratório</a>
                 <a href="#" id="btnSair">Sair</a>
             </nav>
         </div>
@@ -43,14 +46,23 @@
         if (!usuarioLogado) {
             window.location.href = 'login.html';
         }
+        console.log('Tipo do usuário:', usuarioLogado?.usuario?.tipo);
+        if (usuarioLogado?.usuario?.tipo === "admin") {
+            console.log('Usuário é admin, mostrando links administrativos');
+            document.getElementById("adminLink").style.display = "inline";
+            document.getElementById("criarLab").style.display = "inline";
+        } else {
+            console.log('Usuário não é admin');
+        }
 
         // Função para carregar laboratórios
         async function carregarLaboratorios() {
             const container = document.getElementById('cards-container');
             
             try {
-                const response = await fetch("https://3000-ia3x6g61do0vm9a3z4wa8-4bea3717.manusvm.computer/api/laboratorios");
+                const response = await fetch("http://localhost:3000/api/laboratorios");
                 const labs = await response.json();
+                console.log("Laboratórios carregados:", labs);
 
                 container.innerHTML = '';
 
@@ -59,7 +71,8 @@
                     card.className = 'card';
                     
                     // Verificar status de reserva (simulado por enquanto)
-                    const statusReserva = Math.random() > 0.5 ? 'disponivel' : 'ocupado';
+                    const statusReserva = 'disponivel';
+
                     
                     card.innerHTML = `
                         <div class="card-header">

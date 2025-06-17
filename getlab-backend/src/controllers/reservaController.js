@@ -7,8 +7,8 @@ const listarReservas = async (req, res) => {
     const reservas = await prisma.reserva.findMany({
       include: {
         usuario: true,
-        laboratorio: true
-      }
+        laboratorio: true,
+      },
     });
     res.json(reservas);
   } catch (err) {
@@ -18,60 +18,65 @@ const listarReservas = async (req, res) => {
 
 // Criar nova reserva
 const criarReserva = async (req, res) => {
-  const { laboratorioId, usuarioId, dataReserva, horaInicio, horaFim, descricao } = req.body;
+  const { laboratorioId, usuarioId, data, horaInicio, horaFim } = req.body;
 
-  if (!laboratorioId || !usuarioId || !dataReserva || !horaInicio || !horaFim) {
+  if (!laboratorioId || !usuarioId || !data || !horaInicio || !horaFim) {
     return res.status(400).json({ error: "Todos os campos são obrigatórios" });
   }
 
   try {
-    // Combinar data e hora para criar DateTime
-    const dataHoraInicio = new Date(`${dataReserva}T${horaInicio}:00.000Z`);
-    
-    // Verificar se o laboratório existe
     const laboratorio = await prisma.laboratorio.findUnique({
-      where: { id: parseInt(laboratorioId) }
+      where: { id: parseInt(laboratorioId) },
     });
 
     if (!laboratorio) {
       return res.status(404).json({ error: "Laboratório não encontrado" });
     }
 
-    // Verificar se o usuário existe
     const usuario = await prisma.usuario.findUnique({
-      where: { id: parseInt(usuarioId) }
+      where: { id: parseInt(usuarioId) },
     });
 
     if (!usuario) {
       return res.status(404).json({ error: "Usuário não encontrado" });
     }
 
-    // Verificar se já existe reserva para o mesmo horário
-    const reservaExistente = await prisma.reserva.findFirst({
+    // ⚠️ Verificar conflito de horário
+    const conflito = await prisma.reserva.findFirst({
       where: {
         laboratorioId: parseInt(laboratorioId),
-        dataHora: dataHoraInicio,
-        status: {
-          in: ['pendente', 'aprovado']
-        }
-      }
+        data: new Date(data),
+        status: { in: ["pendente", "aprovado"] },
+        AND: [
+          {
+            horaInicio: { lt: horaFim },
+          },
+          {
+            horaFim: { gt: horaInicio },
+          },
+        ],
+      },
     });
 
-    if (reservaExistente) {
-      return res.status(409).json({ error: "Já existe uma reserva para este horário" });
+    if (conflito) {
+      return res
+        .status(409)
+        .json({ error: "Já existe uma reserva neste horário." });
     }
 
     const novaReserva = await prisma.reserva.create({
       data: {
         laboratorioId: parseInt(laboratorioId),
         usuarioId: parseInt(usuarioId),
-        dataHora: dataHoraInicio,
-        status: 'pendente'
+        data: new Date(data),
+        horaInicio,
+        horaFim,
+        status: "pendente",
       },
       include: {
         usuario: true,
-        laboratorio: true
-      }
+        laboratorio: true,
+      },
     });
 
     res.status(201).json(novaReserva);
@@ -84,25 +89,29 @@ const criarReserva = async (req, res) => {
 // Atualizar status da reserva
 const atualizarReserva = async (req, res) => {
   const { id } = req.params;
-  const { status } = req.body;
+  const { status, motivo } = req.body;
 
-  if (!['pendente', 'aprovado', 'recusado'].includes(status)) {
+  if (!["pendente", "aprovado", "recusado", "cancelado"].includes(status)) {
     return res.status(400).json({ error: "Status inválido" });
   }
 
   try {
     const reserva = await prisma.reserva.update({
       where: { id: parseInt(id) },
-      data: { status },
+      data: { 
+        status,
+        motivo: motivo || null // Include motivo in the update
+      },
       include: {
         usuario: true,
-        laboratorio: true
-      }
+        laboratorio: true,
+      },
     });
 
     res.json(reserva);
   } catch (err) {
-    if (err.code === 'P2025') {
+    console.error("Erro ao atualizar reserva:", err);
+    if (err.code === "P2025") {
       return res.status(404).json({ error: "Reserva não encontrada" });
     }
     res.status(500).json({ error: "Erro ao atualizar reserva" });
@@ -115,12 +124,12 @@ const deletarReserva = async (req, res) => {
 
   try {
     await prisma.reserva.delete({
-      where: { id: parseInt(id) }
+      where: { id: parseInt(id) },
     });
 
     res.json({ message: "Reserva deletada com sucesso" });
   } catch (err) {
-    if (err.code === 'P2025') {
+    if (err.code === "P2025") {
       return res.status(404).json({ error: "Reserva não encontrada" });
     }
     res.status(500).json({ error: "Erro ao deletar reserva" });
@@ -136,9 +145,9 @@ const buscarReservasPorLaboratorio = async (req, res) => {
       where: { laboratorioId: parseInt(laboratorioId) },
       include: {
         usuario: true,
-        laboratorio: true
+        laboratorio: true,
       },
-      orderBy: { dataHora: 'asc' }
+      orderBy: { data: "asc" },
     });
 
     res.json(reservas);
@@ -156,14 +165,64 @@ const buscarReservasPorUsuario = async (req, res) => {
       where: { usuarioId: parseInt(usuarioId) },
       include: {
         usuario: true,
-        laboratorio: true
+        laboratorio: true,
       },
-      orderBy: { dataHora: 'asc' }
+      orderBy: { data: "asc" },
     });
 
     res.json(reservas);
   } catch (err) {
     res.status(500).json({ error: "Erro ao buscar reservas" });
+  }
+};
+
+// Buscar reservas pendentes
+const buscarReservasPendentes = async (req, res) => {
+  try {
+    const reservas = await prisma.reserva.findMany({
+      where: { status: "pendente" },
+      include: {
+        usuario: true,
+        laboratorio: true,
+      },
+      orderBy: { data: "asc" },
+    });
+
+    res.json(reservas);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar reservas pendentes" });
+  }
+};
+
+// Buscar reservas por mês e laboratório (calendário)
+const buscarReservasPorDataLaboratorio = async (req, res) => {
+  const { laboratorioId, ano, mes } = req.params;
+
+  try {
+    const inicioMes = new Date(parseInt(ano), parseInt(mes) - 1, 1);
+    const fimMes = new Date(parseInt(ano), parseInt(mes), 0, 23, 59, 59);
+
+    const reservas = await prisma.reserva.findMany({
+      where: {
+        laboratorioId: parseInt(laboratorioId),
+        data: {
+          gte: inicioMes,
+          lte: fimMes,
+        },
+        status: {
+          in: ["pendente", "aprovado"],
+        },
+      },
+      include: {
+        usuario: true,
+        laboratorio: true,
+      },
+      orderBy: { data: "asc" },
+    });
+
+    res.json(reservas);
+  } catch (err) {
+    res.status(500).json({ error: "Erro ao buscar reservas por data" });
   }
 };
 
@@ -173,6 +232,7 @@ module.exports = {
   atualizarReserva,
   deletarReserva,
   buscarReservasPorLaboratorio,
-  buscarReservasPorUsuario
+  buscarReservasPorUsuario,
+  buscarReservasPendentes,
+  buscarReservasPorDataLaboratorio,
 };
-

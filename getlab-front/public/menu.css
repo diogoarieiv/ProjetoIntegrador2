@@ -11,7 +11,7 @@
 
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    background: linear-gradient(135deg, #ffffff 0%, #ffffff 100%);
     margin: 0;
     padding: 0;
     min-height: 100vh;
@@ -19,7 +19,7 @@ body {
 }
 
 .header {
-    background: linear-gradient(135deg, #4a6cf7 0%, #667eea 100%);
+    background: linear-gradient(135deg, #3b5998 0%, #3b5998 100%);
     padding: 15px 40px;
     display: flex;
     justify-content: space-between; 
@@ -40,7 +40,7 @@ body {
 
 .logo img {
     height: 50px;
-    filter: brightness(0) invert(1);
+    
 }
 
 .navbar {
@@ -79,7 +79,7 @@ body {
 }
 
 .container h1 {
-    color: white;
+    color: #3b5998;
     font-size: 2.5rem;
     margin-bottom: 40px;
     text-align: center;
@@ -95,7 +95,7 @@ body {
 }
 
 .card {
-    background: rgba(255, 255, 255, 0.95);
+    background: #3b5998;
     padding: 30px;
     border-radius: 20px;
     box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
@@ -108,7 +108,7 @@ body {
 .card:hover {
     transform: translateY(-10px);
     box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
-    background: rgba(255, 255, 255, 1);
+    background: #3b5998
 }
 
 .card img {
@@ -126,7 +126,7 @@ body {
 }
 
 .card h3 {
-    color: #4a6cf7;
+    color: #ffffff;
     font-size: 1.5rem;
     font-weight: 600;
     margin-bottom: 15px;
@@ -136,7 +136,7 @@ body {
     display: inline-block;
     margin-top: 30px;
     background: linear-gradient(135deg, #4a6cf7 0%, #667eea 100%);
-    color: white;
+    color: #c4d3f3;
     padding: 15px 30px;
     border-radius: 25px;
     font-weight: 600;
@@ -214,4 +214,9 @@ body {
 .card:nth-child(2) { animation-delay: 0.2s; }
 .card:nth-child(3) { animation-delay: 0.3s; }
 .card:nth-child(4) { animation-delay: 0.4s; }
+
+.computador-branco {
+    filter: brightness(0) invert(1);
+    transition: filter 0.3s ease;
+}
 

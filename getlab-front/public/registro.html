@@ -14,9 +14,9 @@
         </div>
         <div class="nav">
             <nav class="navbar">
-                <a href="menu.html">Home</a>
                 <a href="laboratorios.html">Laboratórios</a>
                 <a href="verReserva.html">Ver Reservas</a>
+                <a href="admin.html" id="adminLink" style="display: none;">Painel Admin</a>
                 <a href="registro.html" class="active">Registro</a>
                 <a href="#" id="btnSair">Sair</a>
             </nav>
@@ -122,10 +122,16 @@
     <script>
         // Verificar se usuário está logado
         const usuarioLogado = JSON.parse(localStorage.getItem('usuario'));
-        if (!usuarioLogado) {
+        if (!usuarioLogado || !usuarioLogado.usuario) {
             window.location.href = 'login.html';
         }
 
+        if (usuarioLogado?.usuario?.tipo === "admin") {
+            console.log('Usuário é admin, mostrando links administrativos');
+            document.getElementById("adminLink").style.display = "inline";
+        } else {
+            console.log('Usuário não é admin');
+        }
         // Variáveis globais
         let registros = [];
         let registrosFiltrados = [];
@@ -199,11 +205,18 @@
                 const statusClass = getStatusClass(registro.status);
                 const dataFormatada = new Date(registro.data).toLocaleString('pt-BR');
                 
+                // Adiciona o admin se existir
+                let adminInfo = '';
+                if (registro.admin) {
+                    adminInfo = `<p class="admin">Admin: ${registro.admin}</p>`;
+                }
+                
                 registroElement.innerHTML = `
                     <div class="registro-header">
                         <div class="registro-info">
                             <h4>${registro.docente}</h4>
                             <p class="email">${registro.email}</p>
+                            ${adminInfo}
                         </div>
                         <div class="registro-status">
                             <span class="status-badge ${statusClass}">${registro.status}</span>
@@ -339,8 +352,8 @@
         // Adicionar registro de login ao carregar a página
         async function adicionarRegistroLogin() {
             const registro = {
-                docente: usuarioLogado.nome,
-                email: usuarioLogado.email,
+                docente: usuarioLogado.usuario.nome,
+                email: usuarioLogado.usuario.email,
                 data: new Date().toISOString(),
                 status: 'Login realizado',
                 detalhes: `Usuário acessou a página de registro em ${new Date().toLocaleString('pt-BR')}`

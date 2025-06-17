@@ -11,6 +11,7 @@ enum StatusReserva {
   pendente
   aprovado
   recusado
+  cancelado
 }
 
 model Usuario {
@@ -34,8 +35,11 @@ model Laboratorio {
 
 model Reserva {
   id             Int            @id @default(autoincrement())
-  dataHora       DateTime
-  status         StatusReserva
+  data           DateTime       // 👉 Apenas a data da reserva
+  horaInicio     String         // 👉 Horário de início, ex: "08:00"
+  horaFim        String         // 👉 Horário de fim, ex: "10:00"
+  status         StatusReserva  // pendente, aprovado, recusado, cancelado
+  motivo         String?        // Motivo da recusa ou cancelamento
 
   usuarioId      Int
   laboratorioId  Int
@@ -43,6 +47,7 @@ model Reserva {
   usuario        Usuario        @relation(fields: [usuarioId], references: [id])
   laboratorio    Laboratorio    @relation(fields: [laboratorioId], references: [id])
 }
+
 
 model Registro {
   id        Int       @id @default(autoincrement())
